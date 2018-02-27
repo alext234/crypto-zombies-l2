@@ -4,24 +4,40 @@ import "ds-test/test.sol";
 
 import "./ZombieFactory.sol";
 
+contract ZombieFactoryUser {
+    ZombieFactory factory;
+    
+    function ZombieFactoryUser(ZombieFactory factory_) public {
+        factory = factory_;
+    }
+    
+    function createRandomZombie(string _name) public {
+        factory.createRandomZombie(_name);
+    }
+
+}
+
 contract ZombieFactoryTest is DSTest, ZombieFactoryEvents {
     ZombieFactory factory;
 
+	ZombieFactoryUser user1;
+	ZombieFactoryUser user2;
     function setUp() public {
         factory = new ZombieFactory();
+        user1 = new ZombieFactoryUser(factory);
+        user2 = new ZombieFactoryUser(factory);
     }
-
 
     function test_createRandomZombie() public {
         expectEventsExact(factory);
         
         assertEq( factory.getZombiesCount(), 0);
-        factory.createRandomZombie("a");        
+        user1.createRandomZombie("a");        
         assertEq( factory.getZombiesCount(), 1);
         // check for event
         NewZombie(0, "a", factory.getDnaByIndex(0));
 
-        factory.createRandomZombie("b");        
+        user2.createRandomZombie("b");        
         assertEq( factory.getZombiesCount(), 2);
         // check for event
         NewZombie(1, "b", factory.getDnaByIndex(1));
@@ -33,4 +49,10 @@ contract ZombieFactoryTest is DSTest, ZombieFactoryEvents {
         assert( bDna != aDna );
     }
 
+	function testFail_UserCantCreateMoreThanOne() public {
+		user1.createRandomZombie("a");      
+        assertEq( factory.getZombiesCount(), 1);
+
+	    user1.createRandomZombie("b"); // this should throw       
+	}
 }
